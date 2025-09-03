@@ -96,7 +96,7 @@ df = pd.read_csv(config["file_path"])
 
 df_filtered = df[df['Ticket'] != 'Donate to PyBeach']  # ignore ticket type = Donate to PyBeach
 df_filtered = df[df['Photo opt-out'].notna()]          # ignore rows without photo opt-out values
-df_filtered['Attendee'] = 'Attendee'
+# df_filtered['Attendee'] = 'Attendee'                   assuming final CSV will have Attendee column
 
 df_filtered = df_filtered.reset_index()
 
