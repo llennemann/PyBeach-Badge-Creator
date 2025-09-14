@@ -2,3 +2,4 @@ file_path : "tito-export-format.csv"
 photo_opt_out_icon : "assets/no-photos.svg"
 logo_icon : "assets/pybeach2025-fullcolor.svg"
 event_name : "PyBeach | September 27, 2025"
+with_guides : true
