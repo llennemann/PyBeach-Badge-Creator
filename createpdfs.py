@@ -116,16 +116,13 @@ badge_xys = [                                          # placement for the 6 bad
 guide_margin = 3
 edge_margin = 6
 
-output_path = "badges_0.pdf"                           # starting canvas
-c = canvas.Canvas(output_path, pagesize=LETTER)
+output_path = config.get("output_file", "badges.pdf")
+c = canvas.Canvas(output_path, pagesize=LETTER)        # starting canvas
 
 badge_count = 0
 for index, row in df_filtered.iterrows():
     if badge_count == 6:                               # start a new sheet of badges
-        c.save()
-        print(f"PDF saved to {output_path}")
-        output_path = "badges_" + str(index) + ".pdf"
-        c = canvas.Canvas(output_path, pagesize=LETTER)
+        c.showPage()
         c.setFillColor(black)
         badge_count = 0
     name = row["What name would you like printed on your badge?"]
@@ -135,7 +132,7 @@ for index, row in df_filtered.iterrows():
     
     x = badge_xys[badge_count][0]                       # top left point for the badge
     y = badge_xys[badge_count][1]
-
+    
     if config.get('with_guides', False):
         c.push_state_stack()
         c.setLineWidth(2)
