@@ -133,14 +133,6 @@ for index, row in df_filtered.iterrows():
     
     x = badge_xys[badge_count][0]                       # top left point for the badge
     y = badge_xys[badge_count][1]
-    
-    if config.get('with_guides', False):
-        c.push_state_stack()
-        c.setLineWidth(2)
-        c.setDash(5, 5)
-        c.setStrokeColorRGB(0.0, 0.0, 0.0)
-        c.rect(x-guide_margin,y-guide_margin,badge_width+guide_margin*2,badge_height+guide_margin*2, fill=0)
-        c.pop_state_stack()
 
     if row['Photo opt-out'] == 'Opt-out':               
         drawing = svg2rlg(config['photo_opt_out_icon'])
@@ -206,10 +198,18 @@ for index, row in df_filtered.iterrows():
     event = config['event_name']
 
     c.setFillColor(HexColor("#337ab7"))
-    c.rect(x + 2, y + 5, badge_width - 4, ribbon_height, stroke=0, fill=1)
+    c.rect(x - 5, y + 5, badge_width + 10, ribbon_height, stroke=0, fill=1)
     c.setFillColor(white)
     c.setFont("Helvetica-Bold", 16)
     c.drawCentredString(x + badge_width / 2, y + (ribbon_height/2), event)
+
+    if config.get('with_guides', False):
+        c.push_state_stack()
+        c.setLineWidth(2)
+        c.setDash(5, 5)
+        c.setStrokeColorRGB(0.0, 0.0, 0.0)
+        c.rect(x-guide_margin,y-guide_margin,badge_width+guide_margin*2,badge_height+guide_margin*2, fill=0)
+        c.pop_state_stack()
 
     badge_count += 1
 
