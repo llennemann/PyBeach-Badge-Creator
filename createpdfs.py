@@ -96,7 +96,6 @@ df = pd.read_csv(config["file_path"])
 
 df_filtered = df[df['Ticket'] != 'Donate to PyBeach']  # ignore ticket type = Donate to PyBeach
 df_filtered = df[df['Photo opt-out'].notna()]          # ignore rows without photo opt-out values
-# df_filtered['Attendee'] = 'Attendee'                   assuming final CSV will have Attendee column
 
 df_filtered = df_filtered.reset_index()
 
@@ -114,7 +113,7 @@ badge_xys = [                                          # placement for the 6 bad
 ]
 
 guide_margin = 3
-edge_margin = 6
+edge_margin = 8
 
 output_path = config.get("output_file", "badges.pdf")
 c = canvas.Canvas(output_path, pagesize=LETTER)        # starting canvas
@@ -125,21 +124,15 @@ for index, row in df_filtered.iterrows():
         c.showPage()
         c.setFillColor(black)
         badge_count = 0
-    name = row["What name would you like printed on your badge?"]
+    name = row["What name would you like printed on your badge?"].strip()
     if pd.isna(name):
         print(f'Error with row {index}: name is missing a value.')
         continue
+    if name[0] == '*':
+        name = ''
     
     x = badge_xys[badge_count][0]                       # top left point for the badge
     y = badge_xys[badge_count][1]
-    
-    if config.get('with_guides', False):
-        c.push_state_stack()
-        c.setLineWidth(2)
-        c.setDash(5, 5)
-        c.setStrokeColorRGB(0.0, 0.0, 0.0)
-        c.rect(x-guide_margin,y-guide_margin,badge_width+guide_margin*2,badge_height+guide_margin*2, fill=0)
-        c.pop_state_stack()
 
     if row['Photo opt-out'] == 'Opt-out':               
         drawing = svg2rlg(config['photo_opt_out_icon'])
@@ -148,18 +141,18 @@ for index, row in df_filtered.iterrows():
         drawing.width *= scale
         drawing.height *= scale
         drawing.scale(scale, scale)
-        renderPDF.draw(drawing, c, x + 4, y + badge_height - logo_size)
+        renderPDF.draw(drawing, c, x + edge_margin, y + badge_height - logo_size - edge_margin / 2)
     
     pronouns_option = row['Would you like your pronouns printed on your badge?']
-    if not pd.isna(pronouns_option) and pronouns_option == 'Yes':
+    if not pd.isna(pronouns_option) and pronouns_option.startswith('Yes'):
         pronouns = row['Pronouns']
         if not pd.isna(pronouns) and pronouns != "-":
-            c.setFont("Helvetica", 13)
+            c.setFont("Helvetica", 14)
             c.setFillColor(black)
             c.drawRightString(x + badge_width - edge_margin, y + badge_height - (edge_margin * 2), pronouns)
 
     drawing = svg2rlg(config['logo_icon'])
-    logo_size = 88
+    logo_size = 96
     scale = min(logo_size / drawing.width, logo_size / drawing.height)
     drawing.width *= scale
     drawing.height *= scale
@@ -174,14 +167,20 @@ for index, row in df_filtered.iterrows():
         company = row["Ticket Company Name"]
         if not pd.isna(title):
             company = f"{title}, " + company
+    elif typ == 'Early Bird Student' or typ == 'Student':
+        company = row["What school do you attend?"]
+        if not pd.isna(company):
+            company = f'Sudent, {company}'
+        else:
+            company = 'Student'
     else:
         if not pd.isna(title):
-            company = f"{title} " + company
+            company = f"{title}"
 
     if company == "":
-        name_y = y + badge_height - 128
+        name_y = y + badge_height - 138
     else:
-        name_y = y + badge_height - 115
+        name_y = y + badge_height - 128
     
     cleaned_name = re.sub(r"\s+", " ", name).strip()                      # clean up spacing in name 
     font_size = return_fontsize_that_fits(badge_width, cleaned_name, 20)
@@ -190,25 +189,36 @@ for index, row in df_filtered.iterrows():
     c.drawCentredString(x + badge_width / 2, name_y, cleaned_name)        # print in the middle if no job title/company
 
     if company != "":
-        job_font_size = return_fontsize_that_fits(badge_width, company, 14)
+        job_font_size = return_fontsize_that_fits(badge_width, company, 16)
         c.setFont("Helvetica", job_font_size)
         c.setFillColor(black)
-        c.drawCentredString(x + badge_width / 2, y + badge_height - 135, company)
+        c.drawCentredString(x + badge_width / 2, y + badge_height - 150, company)
+    
+    ribbon_height = 30
+
+    order_reference = row['Order Reference']
+    if not pd.isna(order_reference):
+        c.setFont("Helvetica", 10)
+        c.setFillColor(black)
+        c.drawRightString(x + badge_width - edge_margin, y + ribbon_height + 10, order_reference)
+
 
     event = config['event_name']
-    c.setFillColor(grey)
-    c.setFont("Helvetica", 13)
-    c.drawCentredString(x + badge_width / 2, y + badge_height - 155, event)
 
-    if not pd.isna(row["Attendee"]):
-        ribbon_height = 35
-        c.setFillColor(HexColor("#337ab7"))
-        c.rect(x + 2, y + 5, badge_width - 4, ribbon_height, stroke=0, fill=1)
-        c.setFillColor(white)
-        c.setFont("Helvetica-Bold", 14)
-        c.drawCentredString(x + badge_width / 2, y + (ribbon_height/2), row["Attendee"])
-    else:
-        print(f'Warning: {name} does not have a value for Attendee column.')
+    c.setFillColor(HexColor("#337ab7"))
+    c.rect(x - 5, y + 5, badge_width + 10, ribbon_height, stroke=0, fill=1)
+    c.setFillColor(white)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawCentredString(x + badge_width / 2, y + (ribbon_height/2), event)
+
+    if config.get('with_guides', False):
+        c.push_state_stack()
+        c.setLineWidth(2)
+        c.setDash(5, 5)
+        c.setStrokeColorRGB(0.0, 0.0, 0.0)
+        c.rect(x-guide_margin,y-guide_margin,badge_width+guide_margin*2,badge_height+guide_margin*2, fill=0)
+        c.pop_state_stack()
+
     badge_count += 1
 
 c.save()                                                 # save any remaining canvas
