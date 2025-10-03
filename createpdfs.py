@@ -195,6 +195,14 @@ for index, row in df_filtered.iterrows():
         c.drawCentredString(x + badge_width / 2, y + badge_height - 150, company)
     
     ribbon_height = 30
+
+    order_reference = row['Order Reference']
+    if not pd.isna(order_reference):
+        c.setFont("Helvetica", 10)
+        c.setFillColor(black)
+        c.drawRightString(x + badge_width - edge_margin, y + ribbon_height + 10, order_reference)
+
+
     event = config['event_name']
 
     c.setFillColor(HexColor("#337ab7"))
